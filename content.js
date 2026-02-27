@@ -10236,7 +10236,6 @@ function convertLayout(str) {
 	const target = detectLayout(str) === "en" ? "ru" : "en";
 
 	return str.split("").map(ch => {
-		console.log(ch)
 		const infos = reverseMap[ch];
 		if (!infos) return ch;
 		
@@ -10352,4 +10351,5 @@ chrome.storage.sync.get(["excluded_urls", "auto_correction"]).then((result) => {
 	) {
 		document.addEventListener("keyup", enableAuto);
 	} 
+
 });
