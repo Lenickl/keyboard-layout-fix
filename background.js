@@ -64,6 +64,7 @@ chrome.contextMenus.onClicked.addListener((item, tab) => {
     let url = new URL(tab.url);
 
     if (item.menuItemId === "reportInput") {
+        // This part is not done yet
         console.log(Date.now(), url.hostname);
         return;
     }
@@ -126,5 +127,5 @@ chrome.commands.onCommand.addListener((command) => {
         chrome.tabs.sendMessage(tab.id, {type: "convert"});
         
     });
-
+    
 });
