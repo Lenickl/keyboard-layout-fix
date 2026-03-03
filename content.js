@@ -10106,7 +10106,7 @@ function buildReverseMap(layout) {
 
 // ===== Conversion Engine =====
 const exceptionHandlers = [
-	function twitchHandler(el) {
+	function twitchHandler(el, func) {
 		const editor = el?.closest('[data-a-target="chat-input"]');
 		if (!editor) return false;
 
@@ -10114,7 +10114,7 @@ const exceptionHandlers = [
 		const range = document.createRange();
 
 		const textNode = editor.querySelector('[data-slate-string="true"]')?.firstChild;
-		const convertedText = convertLayout(textNode?.textContent || editor.textContent);
+		const convertedText = func(textNode?.textContent || editor.textContent);
 		
 		const dataTransfer = new DataTransfer();
 		dataTransfer.setData('text/plain', convertedText);
@@ -10140,19 +10140,19 @@ const exceptionHandlers = [
 		
 		return true;
 	},
-	function defaultHandler(el) {
+	function defaultHandler(el, func) {
 		const selection = document.getSelection();
 
 		const node = getTextNodeAtCursor(selection);
 		if(!node) return false;
 
 		if (selection.isCollapsed) {
-			node.textContent = convertLayout(node.textContent);
+			node.textContent = func(node.textContent);
 			return true;
 		}
 
 		const range = selection.getRangeAt(0);
-		const textNode = document.createTextNode(convertLayout(selection.toString()));
+		const textNode = document.createTextNode(func(selection.toString()));
 
 		range.deleteContents();
 		range.insertNode(textNode);
@@ -10161,20 +10161,20 @@ const exceptionHandlers = [
 	}
 ];
 
-function processContentEditable(el) {
+function processContentEditable(el, func = convertLayout) {
 	for (const handler of exceptionHandlers) 
-		if (handler(el)) return;
+		if (handler(el, func)) return;
 }
 
-function convertInput(el) {
+function convertInput(el, func = convertLayout) {
 	const start = el.selectionStart;
 	const end = el.selectionEnd;
 
 	if (start !== end) {
 		const selected = el.value.slice(start, end);
-		el.setRangeText(convertLayout(selected), start, end, "select");
+		el.setRangeText(func(selected), start, end, "select");
 	} else {
-		el.value = convertLayout(el.value);
+		el.value = func(el.value);
 	}
 }
 
@@ -10232,6 +10232,7 @@ function convertLastWord() {
 	
 }
 
+// ===== Utils =====
 function convertLayout(str) {
 	const target = detectLayout(str) === "en" ? "ru" : "en";
 
@@ -10253,7 +10254,10 @@ function convertLayout(str) {
 	}).join("");
 }
 
-// ===== Utils =====
+function convertRegister(str) {
+	return (str.toUpperCase() === str)? str.toLowerCase(): str.toUpperCase();
+}
+
 function check(word, lang) {
 	return DICTS[lang].has(word);
 }
@@ -10266,6 +10270,8 @@ function normalize(word) {
 }
 
 function findWordStart(str, cursor) {
+	const separators = [" ", "Enter", "/", ".", "-", "&", "?"];
+
 	let start = cursor - 1;
 	if (start < 0) return 0;
 
@@ -10308,15 +10314,15 @@ function isContentEditable(el) {
 }
 
 function enableAuto(event) {
+	const separators = [" ", "Enter", ".", ",", "/", "?", "-", "!", "&"];
 	if (separators.includes(event.key)) {
 		clearTimeout(timer);
-		timer = setTimeout(convertLastWord, 300);
+		timer = setTimeout(convertLastWord, 80);
 	}
 }
 
 // ===== Сontrollers =====
 const reverseMap = buildReverseMap(codeLayout);
-const separators = [" ", "Enter", ".", ",", "/", "?", "-", "!", "&", "'"];
 const activeTabUrl = window.location.origin;
 
 let timer;
@@ -10326,13 +10332,15 @@ chrome.runtime.onMessage.addListener((msg) => {
 		const el = document.activeElement;
 		if (!el) return;
 
+		const func = (msg?.value === "layout")? convertLayout : convertRegister;
+
 		if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") 
-			convertInput(el);
-		else if (isContentEditable(el)) processContentEditable(el);
+			convertInput(el, func);
+		else if (isContentEditable(el)) processContentEditable(el, func);
 
 		return;
 	}
-
+	
 	if (msg?.type === "update") {
 		document.removeEventListener("keyup", enableAuto);
 
@@ -10351,5 +10359,4 @@ chrome.storage.sync.get(["excluded_urls", "auto_correction"]).then((result) => {
 	) {
 		document.addEventListener("keyup", enableAuto);
 	} 
-
 });
