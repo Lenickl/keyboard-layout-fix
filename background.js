@@ -64,7 +64,6 @@ chrome.contextMenus.onClicked.addListener((item, tab) => {
     let url = new URL(tab.url);
 
     if (item.menuItemId === "reportInput") {
-        // This part is not done yet
         console.log(Date.now(), url.hostname);
         return;
     }
@@ -78,7 +77,7 @@ chrome.contextMenus.onClicked.addListener((item, tab) => {
             
             await chrome.storage.sync.set({ excluded_urls: map });
 
-            chrome.tabs.query({url: `*${url.hostname}*`}, async (tabs) => {
+            chrome.tabs.query({url: url.origin + "/*"}, async (tabs) => {
                 for (const tab of tabs)
                     chrome.tabs.sendMessage(tab.id, {type: "update", value: !map[url.hostname]});                         
             });
@@ -118,14 +117,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // ===== Commands =====
 chrome.commands.onCommand.addListener((command) => {
-    if (command !== "run-content-script") return;
 
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         const tab = tabs[0];
         if (!tab?.id) return;
 
-        chrome.tabs.sendMessage(tab.id, {type: "convert"});
+        if (command === "change-layout") {
+            chrome.tabs.sendMessage(tab.id, {type: "convert", value: "layout"});
+            return;
+        }
+
+        if (command === "change-register") {
+            chrome.tabs.sendMessage(tab.id, {type: "convert", value: "register"});
+            return;
+        }
         
     });
-    
+
 });
