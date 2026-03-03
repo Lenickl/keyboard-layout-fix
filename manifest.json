@@ -1,7 +1,7 @@
 {
     "name": "ять fix",
-    "description": "Converts text typed in the wrong keyboard layout. It works in input, textarea, and most custom fields. You can convert selected or full text. Includes automatic correction with context menu controls and per-site exclusions.",
-    "version": "1.5",
+    "description": "Converts text typed in the wrong keyboard layout and more. It works in input, textarea, and most custom fields. You can convert selected or full text. Includes automatic correction with context menu controls and per-site exclusions.",
+    "version": "1.6",
     "manifest_version": 3,
 
     "icons": {
@@ -23,12 +23,19 @@
     },
 
     "commands": {
-        "run-content-script": {
+        "change-layout": {
             "suggested_key": {
-                "default": "Ctrl+Shift+X",
-                "mac": "Command+Shift+X"
+                "default": "Alt+X",
+                "mac": "Alt+X"
             },
-            "description": "Run content script"
+            "description": "Changes text layout (language)"
+        },
+        "change-register": {
+            "suggested_key": {
+                "default": "Alt+Z",
+                "mac": "Alt+Z"
+            },
+            "description": "Changes text register"
         }
     },
     
